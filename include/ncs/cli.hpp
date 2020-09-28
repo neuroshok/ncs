@@ -8,10 +8,19 @@
 
 namespace ncs
 {
-    class cli
+    class cli_base
     {
     public:
-        cli(std::string command_root) : module_name_{ std::move(command_root) } {}
+        virtual void add(ncs::command command) = 0;
+    };
+
+    template<class T>
+    class cli : public cli_base
+    {
+    public:
+        cli(std::string command_root)
+            : module_name_{ std::move(command_root) }
+        {}
 
         void process(int argc, const char* argv[])
         {
@@ -21,7 +30,7 @@ namespace ncs
             }
         }
         
-        void add(ncs::command command)
+        void add(ncs::command command) override
         {
             commands_.emplace_back(std::move(command));
         }
@@ -40,10 +49,11 @@ namespace ncs
         }
 
         const std::string& module_name() const { return module_name_; }
+        T& get() { return static_cast<T&>(*this); }
 
         void help()
         {
-            std::cout << "usage : ncs (command_node...) command \n";
+            std::cout << "usage : " + module_name_ + " (command_node...) command \n";
             std::cout << "        (value... | -name(.field...)(:value)...) \n\n";
             std::cout << "*************************************\ncommands : \n";
             for (const auto& command : commands_)

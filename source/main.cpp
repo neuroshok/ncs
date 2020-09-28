@@ -1,42 +1,49 @@
 #include <ncs/cli.hpp>
 
-struct nc_commands :ncs::node
+using namespace std::string_literals;
+
+struct compiler
 {
-    using ncs::node::node;
+    void process(std::string filename) { std::cout << "\ncompile file " << filename; }
+};
+
+struct ngl_cli : public ncs::cli<::ngl_cli>
+{
+    ngl_cli(std::string name, ::compiler& c) : ncs::cli<::ngl_cli>(std::move(name)), compiler{c} {}
+    ::compiler& compiler;
+};
+
+using node = ncs::node<::ngl_cli>;
+struct nc_commands : node
+{
+    using node::node;
     
-    ncs::init<ncs::command> version{ this, "version", []{}, "Display compiler version" };
+    ncs::init<ncs::command> version{ this, "version", [this]{ cli.help(); }, "Display compiler version" };
 
-    struct :ncs::node
+    //ncs::init<ncs::command> version{ this, "", []{}, "Display compiler version" };
+
+    struct : node
     {
-        using ncs::node::node;
-        ncs::init<ncs::command> add{ this, "add", []{}, "Add a new project" };
+        using node::node;
+        ncs::init<ncs::command> add{ this, "add"
+        , [this]{ cli.compiler.process("test"); }
+        , "Add a new project"
+            , ncs::parameter{ "name", "Project name" }
+            , ncs::parameter{ "vcs", "Initialize VCS", "git"s } };
     } project{ this, "project" };
-
 };
 
 int main(int argc, const char* argv[])
 {
-    ncs::cli cli{ "nc" };
+    ::compiler compiler;
+    ::ngl_cli ngl_cli{ "nc", compiler };
 
-    nc_commands nc{ cli, cli.module_name() };
+    nc_commands nc{ ngl_cli, ngl_cli.module_name() };
 
-/*
-    cli.add("version", [](){ std::cout << "nc version 0.1"; }, ""
-    , ncs::parameter{ "test", "Test filename", true }
-    , ncs::parameter{ "zeta" }
-    );
 
- 
-    cli.add(ncs::path("ncs", "project", "add")
-    , []{}
-    , "Add a new project"
-    , ncs::parameter{ "name", "Project filename" }
-    , ncs::parameter{ "vcs", "Enable vcs", std::string("git") });
-*/
+    ngl_cli.help();
 
-    cli.help();
-
-    cli.process(argc, argv);
+    ngl_cli.process(argc, argv);
 
     return 0;
 }
