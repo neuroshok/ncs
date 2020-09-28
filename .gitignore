@@ -1,0 +1,11 @@
+# hidden folders
+.*/
+
+# binary folder
+bin/
+
+# cmake build folder
+cmake-*/
+
+# user build
+build/
