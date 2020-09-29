@@ -24,9 +24,57 @@ namespace ncs
 
         void process(int argc, const char* argv[])
         {
+            args_index_ = 0;
+
+            input_.reserve(argc);
             for (int i = 0; i < argc; ++i)
             {
-                std::cout << "\n" << argv[i];
+                input_.emplace_back(argv[i]);
+            }
+            
+            // search command
+            bool match = search();
+            //if (!match) suggest(argc, argv);
+            if (!match) error();
+        }
+
+        bool search()
+        {
+            for (const auto& command : commands_)
+            {
+                unsigned int node_level = 0;
+
+                for (const auto& element : input_)
+                {
+                    if (command.path().node(node_level) == element)
+                    {
+                        // command path match, check command name
+                        if (command.path().size() == node_level + 1
+                            && command.name() == element)
+                        {
+                            args_index_ = node_level;
+                            parse_params();
+                            command.exec();
+                            return true;
+                        }
+                        ++node_level;
+                    }
+                    else break;
+                }
+            }
+            return false;
+        }
+
+        void suggest()
+        {
+
+        }
+
+        void parse_params()
+        {
+            for (std::size_t i = params_index_; i < input_.size(); ++i)
+            {
+                std::cout << "\n_" << input_[i];
             }
         }
         
@@ -46,6 +94,11 @@ namespace ncs
         {
             commands_.emplace_back(ncs::path{ module_name_, std::string(command_name) }
             , std::forward<Fn>(fn), std::move(description), std::forward<Ts>(ts)...);
+        }
+
+        void error()
+        {
+            std::cout << "no command found,  use " + module_name_ + " help\n";
         }
 
         const std::string& module_name() const { return module_name_; }
@@ -75,6 +128,8 @@ namespace ncs
         }
 
     private:
+        unsigned int args_index_;
+        std::vector<std::string> input_;
         std::string module_name_;
         std::vector<ncs::command> commands_;
     };

@@ -18,9 +18,18 @@ struct nc_commands : node
 {
     using node::node;
     
-    ncs::init<ncs::command> version{ this, "version", [this]{ cli.help(); }, "Display compiler version" };
+    ncs::init<ncs::command> help{ this, "help", [this]{ cli.help(); }, "Display this help" };
+    ncs::init<ncs::command> version{ this, "version", [this]{ std::cout << "0.2.1"; }, "Display compiler version" };
 
-    //ncs::init<ncs::command> version{ this, "", []{}, "Display compiler version" };
+    struct : node
+    {
+        using node::node;
+        ncs::init<ncs::command> add{ this, "add"
+        , [this]{ std::cout << "add entity"; }
+        , "Add a new entity"
+            , ncs::parameter{ "name", "Entity name" }
+            , ncs::parameter{ "mail", "", ""s } };
+    } entity{ this, "entity" };
 
     struct : node
     {
@@ -36,12 +45,12 @@ struct nc_commands : node
 int main(int argc, const char* argv[])
 {
     ::compiler compiler;
-    ::ngl_cli ngl_cli{ "nc", compiler };
+    ::ngl_cli ngl_cli{ "ncs", compiler };
 
     nc_commands nc{ ngl_cli, ngl_cli.module_name() };
 
 
-    ngl_cli.help();
+    //ngl_cli.help();
 
     ngl_cli.process(argc, argv);
 

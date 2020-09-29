@@ -8,18 +8,20 @@
 
 namespace ncs
 {
-    template<class T>
-    class init;
-
+    class path;
     class cli_base;
 
     template<class T>
     class cli;
+
+    template<class T>
+    class init;
     
     class node_base
     {
     public:
         virtual ncs::cli_base& get_cli() = 0;
+        virtual ncs::path& path() = 0;
     };
 
     template<class T>
@@ -31,14 +33,20 @@ namespace ncs
         node(ncs::node<T>* node, std::string name)
             : name_{ std::move(name) }
             , cli{ node->cli }
-        {}
+            , path_{ node->path() }
+        {
+            path_.add(name_);
+        }
 
         node(ncs::cli<T>& cli_, std::string name)
             : name_{ std::move(name) }
             , cli{ static_cast<T&>(cli_) }
-        {}
+        {
+            path_.add(name_);
+        }
 
         const std::string& name() const { return name_; }
+        ncs::path& path() override { return path_; }
 
         T& get_cli() override { return cli; }
 
@@ -46,6 +54,7 @@ namespace ncs
 
     private:
         std::string name_;
+        ncs::path path_;
     };
 
     template<class T>
@@ -53,9 +62,11 @@ namespace ncs
     {
       public:
         template<class... Args>
-        init(ncs::node_base* node, Args&&... args)
+        init(ncs::node_base* node, std::string name, Args&&... args)
         {
-            node->get_cli().add(T{ std::forward<Args>(args)... });
+            ncs::path path{ node->path() };
+            path.add(std::move(name));
+            node->get_cli().add(T{ std::move(path), std::forward<Args>(args)... });
         }
     };
 
@@ -70,8 +81,16 @@ namespace ncs
             , nodes_{ std::move(ts)... }
         {}
 
+        void add(std::string node_name)
+        { 
+            str_path_ = str_path_ + node_name + " ";
+            nodes_.emplace_back(std::move(node_name));
+        }
+        const node_type& node(unsigned int n) const { return nodes_[n]; }
         const node_type& last() const { return nodes_.back(); }
         const std::string& str() const { return str_path_; }
+        std::size_t size() const { return nodes_.size(); }
+        const std::vector<node_type>& data() const { return nodes_; }
         
     private:
         std::string str_path_;
@@ -91,13 +110,14 @@ namespace ncs
             , function_{ std::move(fn) }
         {}
 
-        void exec()
+        void exec() const
         {
             function_();
         }
 
         const std::string& name() const { return path_.last(); }
         const std::string& description() const { return description_; }
+        const ncs::path& path() const { return path_; }
         const std::string& str_path() const { return path_.str(); }
         const std::vector<ncs::parameter>& parameters() const { return parameters_; }
 
