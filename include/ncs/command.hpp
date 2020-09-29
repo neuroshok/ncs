@@ -1,6 +1,7 @@
 #ifndef INCLUDE_NCS_COMMAND_HPP_NCS
 #define INCLUDE_NCS_COMMAND_HPP_NCS
 
+#include <ncs/input.hpp>
 #include <ncs/parameter.hpp>
 
 #include <string>
@@ -127,33 +128,6 @@ namespace ncs
         std::vector<ncs::parameter> parameters_;
         function_type function_;
     };
-
-
 } // ncs
-
-//command::add( "nc:project", "add", "vcs"_bool = false, "vcs"_bool = true );
-
-
-
-
-/*
-class nc
-{
-    void project_add(const std::string& name)
-}
-
-struct project_
-{
-    ngl::command<required<std::string>, int> test{ "test", "name", "size" }
-    ngl::command<std::string, template_> add{ "add",  }
-} project{this};
-
-nc project test raz 2
-nc project add raz -template.type:cpp
-nc project add raz -template<cpp>
-nc project add raz -template: .type:cpp .vcs:git
-nc project config -vcs
-// if param exist && is_bool, autoactivate (-vcs:true)
-*/
 
 #endif // INCLUDE_NCS_COMMAND_HPP_NCS

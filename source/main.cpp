@@ -35,12 +35,13 @@ struct nc_commands : node
     {
         using node::node;
         ncs::init<ncs::command> add{ this, "add"
-        , [this]{ cli.compiler.process("test"); }
+        , [this]{ cli.compiler.process("test", param.); /* param[""] */ }
         , "Add a new project"
             , ncs::parameter{ "name", "Project name" }
             , ncs::parameter{ "vcs", "Initialize VCS", "git"s } };
     } project{ this, "project" };
 };
+
 
 int main(int argc, const char* argv[])
 {
@@ -48,7 +49,8 @@ int main(int argc, const char* argv[])
     ::ngl_cli ngl_cli{ "ncs", compiler };
 
     nc_commands nc{ ngl_cli, ngl_cli.module_name() };
-
+    nc.project.add.set_function([&compiler](auto&& param)
+    { compiler.add_project(param[nc.project.add.name]); });
 
     //ngl_cli.help();
 

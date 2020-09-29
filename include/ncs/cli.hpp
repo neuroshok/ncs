@@ -2,6 +2,7 @@
 #define INCLUDE_NCS_CLI_HPP_NCS
 
 #include <ncs/command.hpp>
+#include <ncs/command_executor.hpp>
 
 #include <iostream>
 #include <string>
@@ -18,13 +19,17 @@ namespace ncs
     class cli : public cli_base
     {
     public:
+        static constexpr const char* optional_prefix = "-";
+        static constexpr const char* value_prefix = ":";
+        
+
         cli(std::string command_root)
             : module_name_{ std::move(command_root) }
         {}
 
         void process(int argc, const char* argv[])
         {
-            args_index_ = 0;
+            params_index_ = 0;
 
             input_.reserve(argc);
             for (int i = 0; i < argc; ++i)
@@ -52,9 +57,12 @@ namespace ncs
                         if (command.path().size() == node_level + 1
                             && command.name() == element)
                         {
-                            args_index_ = node_level;
-                            parse_params();
-                            command.exec();
+                            params_index_ = node_level + 1;
+
+                            ncs::input_command input_command;
+                            parse_params(input_command);
+                            ncs::command_executor executor{ command, input_command };
+                            executor.process();
                             return true;
                         }
                         ++node_level;
@@ -70,11 +78,38 @@ namespace ncs
 
         }
 
-        void parse_params()
+        void parse_params(ncs::input_command& input_command)
         {
             for (std::size_t i = params_index_; i < input_.size(); ++i)
             {
-                std::cout << "\n_" << input_[i];
+                const auto& param_expression = input_[i];
+                //std::cout << "\nparse__" << param_expression;
+                // parse optional param
+                if (param_expression.substr(0, 1) == optional_prefix)
+                {
+                    // parse param name
+                    std::string param_name;
+                    bool has_value = false;
+                    for (std::size_t i = 1; i < param_expression.size(); ++i)
+                    {
+                        // param has value
+                        if (param_expression.substr(i, 1) == value_prefix)
+                        {
+                            has_value = true;
+                            param_name = param_expression.substr(1, i - 1);
+                            // parse param value
+
+                            input_command.add_option(param_name, param_expression.substr(i + 1));
+                            break;
+                        }
+                    }
+                    if (!has_value)
+                    {
+                        input_command.add_option(param_expression.substr(1));
+                    }
+                }
+                // add positional param value
+                else input_command.add_value(param_expression);
             }
         }
         
@@ -128,7 +163,7 @@ namespace ncs
         }
 
     private:
-        unsigned int args_index_;
+        unsigned int params_index_;
         std::vector<std::string> input_;
         std::string module_name_;
         std::vector<ncs::command> commands_;
