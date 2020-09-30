@@ -16,8 +16,8 @@ namespace ncs
             , description_{ std::move(description) }
         {}
 
-        template<class T>
-        parameter(std::string name, std::string description, T default_value)
+        template<class V>
+        parameter(std::string name, std::string description, V default_value)
             : name_{ std::move(name) }
             , required_{ false }
             , description_{ std::move(description) }

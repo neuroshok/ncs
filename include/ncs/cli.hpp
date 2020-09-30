@@ -12,7 +12,7 @@ namespace ncs
     class cli_base
     {
     public:
-        virtual void add(ncs::command command) = 0;
+        virtual command_ptr add(ncs::command command) = 0;
     };
 
     template<class T>
@@ -51,17 +51,17 @@ namespace ncs
 
                 for (const auto& element : input_)
                 {
-                    if (command.path().node(node_level) == element)
+                    if (command->path().node(node_level) == element)
                     {
                         // command path match, check command name
-                        if (command.path().size() == node_level + 1
-                            && command.name() == element)
+                        if (command->path().size() == node_level + 1
+                            && command->name() == element)
                         {
                             params_index_ = node_level + 1;
 
                             ncs::input_command input_command;
                             parse_params(input_command);
-                            ncs::command_executor executor{ command, input_command };
+                            ncs::command_executor executor{ *command, input_command };
                             executor.process();
                             return true;
                         }
@@ -113,22 +113,25 @@ namespace ncs
             }
         }
         
-        void add(ncs::command command) override
+        ncs::command_ptr add(ncs::command command) override
         {
-            commands_.emplace_back(std::move(command));
+            commands_.emplace_back(std::make_unique<ncs::command>(std::move(command)));
+            return commands_.back().get();
         }
 
         template<class Fn, class... Ts>
-        void add(ncs::path path, Fn&& fn, std::string description, Ts&&... ts)
+        ncs::command_ptr add(ncs::path path, Fn&& fn, std::string description, Ts&&... ts)
         {
             commands_.emplace_back(std::move(path), std::forward<Fn>(fn), std::move(description), std::forward<Ts>(ts)...);
+            return commands_.back().get();
         }
 
         template<class Fn, class... Ts>
-        void add(const char* command_name, Fn&& fn, std::string description, Ts&&... ts)
+        ncs::command_ptr add(const char* command_name, Fn&& fn, std::string description, Ts&&... ts)
         {
             commands_.emplace_back(ncs::path{ module_name_, std::string(command_name) }
             , std::forward<Fn>(fn), std::move(description), std::forward<Ts>(ts)...);
+            return commands_.back().get();
         }
 
         void error()
@@ -146,10 +149,10 @@ namespace ncs
             std::cout << "*************************************\ncommands : \n";
             for (const auto& command : commands_)
             {
-                std::cout << "\n" << command.str_path();
-                if (!command.description().empty()) std::cout << "\n\t" << command.description();
+                std::cout << "\n" << command->str_path();
+                if (!command->description().empty()) std::cout << "\n\t" << command->description();
 
-                for (const auto& parameter : command.parameters())
+                for (const auto& parameter : command->parameters())
                 {
                     std::string parameter_name = parameter.name();
                     if (parameter.required()) parameter_name = "<" + parameter.name() + ">";
@@ -166,7 +169,7 @@ namespace ncs
         unsigned int params_index_;
         std::vector<std::string> input_;
         std::string module_name_;
-        std::vector<ncs::command> commands_;
+        std::vector<std::unique_ptr<ncs::command>> commands_;
     };
 } // ncs
 
