@@ -1,6 +1,7 @@
 #ifndef INCLUDE_NCS_INPUT_HPP_NCS
 #define INCLUDE_NCS_INPUT_HPP_NCS
 
+#include <exception>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,14 @@ namespace ncs
             std::cout << "\n__add_option " << name << " " << value;
             input_parameter p{ std::move(name), std::move(value), false };
             parameters_.emplace_back(std::move(p));
+        }
+
+        template<class Parameter>
+        typename Parameter::type operator[](const Parameter& parameter) const
+        {
+            auto param_it = std::find_if(parameters_.begin(), parameters_.end(), [&](const auto& ip){ return parameter.name() == ip.name; });
+            if (param_it == parameters_.end()) throw std::logic_error("parameter not found, validation error");
+            return param_it->value;
         }
 
     private:

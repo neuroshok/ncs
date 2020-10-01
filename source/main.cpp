@@ -20,7 +20,7 @@ struct nc_commands : node
     using node::node;
     
     ncsi::command help{ this, "help", [this]{ cli.help(); }, "Display this help" };
-    //ncs::init<ncs::command> version{ this, "version", [this]{ std::cout << "0.2.1"; }, "Display compiler version" };
+    ncsi::command version{ this, "version", [this]{ std::cout << "0.2.1"; }, "Display compiler version" };
 
 /*
     struct:node{using node::node;
@@ -35,7 +35,7 @@ struct nc_commands : node
         ncs_command(add)
             ncs_parameter(std::string, name, "Project name")
             ncs_parameter(std::string, vcs, "Init VCS", "git"s)
-        ncs_command_(add, [this]{ cli.compiler.process("test", 0); }, "Add a new project")
+        ncs_command_(add, [this](auto&& input){ std::cout << input[add.vcs];cli.compiler.process("test", 0);  }, "Add a new project")
     ncs_node_(project)
 };
 

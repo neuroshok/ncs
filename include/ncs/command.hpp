@@ -15,7 +15,9 @@ namespace ncs
         template<class T> friend class init_parameter;
 
     public:
-        using function_type = std::function<void()>;
+        using function_type = std::variant<
+        std::function<void()>
+        , std::function<void(const ncs::input_command&)>>;
 
         template<class... Ts>
         command(ncs::path path, function_type fn, std::string description = "", Ts&&... ts)
@@ -25,9 +27,14 @@ namespace ncs
             , function_{ std::move(fn) }
         {}
 
-        void exec() const
+        void exec(const ncs::input_command& input) const
         {
-            function_();
+            std::visit([&input](auto&& fn) {
+            using T = std::decay_t<decltype(fn)>;
+            if constexpr (std::is_same_v<T, std::function<void()>>)
+                fn();
+            else fn(input);
+            }, function_);
         }
 
         const std::string& name() const { return path_.last(); }

@@ -6,8 +6,6 @@
 
 namespace ncs
 {
-    class command;
-    
     class command_executor
     {
     public:
@@ -16,9 +14,14 @@ namespace ncs
             , input_{ input }
         {}
 
+        bool is_valid() const
+        {
+            for (const auto& command_.)
+        }
+
         void process()
         {
-            command_.exec();
+            command_.exec(input_);
         }
 
     private:

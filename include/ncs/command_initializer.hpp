@@ -85,11 +85,19 @@ namespace ncs
     class init_parameter
     {
       public:
+        using type = T;
+
         template<class... Args>
         init_parameter(init_command<ncs::command>* command_node, std::string name, Args&&... args)
+            : name_{ std::move(name) } 
         {
-            command_node->command_ptr_->parameters_.emplace_back(std::move(name), std::forward<Args>(args)...);
+            command_node->command_ptr_->parameters_.emplace_back(name_, std::forward<Args>(args)...);
         }
+
+        const std::string& name() const { return name_; }
+
+    private:
+        std::string name_;
     };
 } // ncs
 
