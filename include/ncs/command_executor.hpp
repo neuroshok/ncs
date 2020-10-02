@@ -16,11 +16,21 @@ namespace ncs
 
         bool is_valid() const
         {
-            for (const auto& command_.)
+            for (const auto& parameter : command_.parameters())
+            {
+                std::cout << "\ncheck " << parameter.name() << " " << parameter.required();
+                input.
+            }
+            return true;
         }
 
         void process()
         {
+            if (!is_valid())
+            {
+                std::cout << "\ninvalid input";
+                return;
+            }
             command_.exec(input_);
         }
 

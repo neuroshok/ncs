@@ -41,16 +41,21 @@ namespace ncs
             parameters_.emplace_back(std::move(p));
         }
 
-        template<class Parameter>
-        typename Parameter::type operator[](const Parameter& parameter) const
+        ncs::input_parameter& parameter(const std::string& name) const
         {
-            auto param_it = std::find_if(parameters_.begin(), parameters_.end(), [&](const auto& ip){ return parameter.name() == ip.name; });
-            if (param_it == parameters_.end()) throw std::logic_error("parameter not found, validation error");
-            return param_it->value;
+            auto param_it = std::find_if(parameters_.begin(), parameters_.end(), [&](const auto& ip){ return name == ip.name; });
+            if (param_it == parameters_.end()) throw std::logic_error("parameter not found");
+            return *param_it;
+        }
+
+        template<class Parameter>
+        typename Parameter::type operator[](const Parameter& p) const
+        {
+            return parameter(p.name()).value;
         }
 
     private:
-        std::vector<input_parameter> parameters_;
+        std::vector<ncs::input_parameter> parameters_;
     };
 } // ncs
 
