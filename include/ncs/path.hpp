@@ -12,7 +12,7 @@ namespace ncs
         
     public:
         template<class... Ts>
-        path(Ts... ts)
+        explicit path(Ts... ts)
             : str_path_{ (std::string{} + ... + (ts + std::string(" "))) }
             , nodes_{ std::move(ts)... }
         {}
@@ -29,11 +29,11 @@ namespace ncs
             str_path_ = str_path_ + node_name + " ";
             nodes_.emplace_back(std::move(node_name));
         }
-        const node_type& node(unsigned int n) const { return nodes_[n]; }
-        const node_type& last() const { return nodes_.back(); }
-        const std::string& str() const { return str_path_; }
-        std::size_t size() const { return nodes_.size(); }
-        const std::vector<node_type>& data() const { return nodes_; }
+        [[nodiscard]] const node_type& node(unsigned int n) const { return nodes_[n]; }
+        [[nodiscard]] const node_type& last() const { return nodes_.back(); }
+        [[nodiscard]] const std::string& str() const { return str_path_; }
+        [[nodiscard]] std::size_t size() const { return nodes_.size(); }
+        [[nodiscard]] const std::vector<node_type>& data() const { return nodes_; }
         
     private:
         std::string str_path_;
