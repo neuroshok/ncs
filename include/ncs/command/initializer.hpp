@@ -30,7 +30,7 @@ namespace ncs
     class cli_base;
 
     template<class T>
-    class cli;
+    class basic_cli;
 
     class node_base
     {
@@ -39,14 +39,12 @@ namespace ncs
         virtual ncs::path& path() = 0;
     };
 
-    struct default_cli_ : public ncs::cli<default_cli_>
+    struct cli : public ncs::basic_cli<cli>
     {
-        default_cli_() : ncs::cli<default_cli_>("ncs") {}
+        cli() : ncs::basic_cli<cli>("ncs") {}
     };
 
-    static ncs::default_cli_ default_cli;
-
-    template<class T = default_cli_>
+    template<class T = ncs::cli>
     class node : public node_base
     {
     public:
@@ -58,9 +56,16 @@ namespace ncs
             path_.add(name_);
         }
 
-        explicit node(ncs::cli<T>& cli_ = ncs::default_cli, std::string name = "ncs")
-            : name_{ std::move(name) }
-            , cli{ static_cast<T&>(cli_) }
+        explicit node(ncs::basic_cli<T>& cli_)
+            : cli{ static_cast<T&>(cli_) }
+            , name_{ cli.module_name() }
+        {
+            path_.add(name_);
+        }
+
+        node(ncs::basic_cli<T>& cli_, std::string name)
+            : cli{ static_cast<T&>(cli_) }
+            , name_{ std::move(name) }
         {
             path_.add(name_);
         }
@@ -68,11 +73,11 @@ namespace ncs
         [[nodiscard]] const std::string& name() const { return name_; }
         ncs::path& path() override { return path_; }
 
-        T& get_cli() override { return cli; }
-
         T& cli;
 
     private:
+        T& get_cli() override { return cli; }
+
         std::string name_;
         ncs::path path_;
     };

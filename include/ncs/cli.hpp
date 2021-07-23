@@ -16,7 +16,7 @@ namespace ncs
     };
 
     template<class T>
-    class cli : public cli_base
+    class basic_cli : public cli_base
     {
     public:
         static constexpr const char* optional_prefix = "-";
@@ -24,7 +24,7 @@ namespace ncs
         static constexpr const char* os_separator = "\\";
         static constexpr const char* os_extension = ".";
 
-        explicit cli(std::string command_root)
+        explicit basic_cli(std::string command_root)
             : module_name_{ std::move(command_root) }
         {}
 
@@ -46,6 +46,8 @@ namespace ncs
                 auto extension_index = input_[0].find_last_of(os_extension);
                 if (extension_index != std::string::npos) input_[0] = input_[0].substr(0, extension_index);
             }
+
+            module_name_ = input_[0];
 
             // search command
             bool match = search();
