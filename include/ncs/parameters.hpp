@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <unordered_map>
+#include <stdexcept>
 
 namespace ncs
 {
