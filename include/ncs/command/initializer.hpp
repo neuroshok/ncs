@@ -41,7 +41,7 @@ namespace ncs
 
     struct cli : public ncs::basic_cli<cli>
     {
-        cli() : ncs::basic_cli<cli>("ncs") {}
+        explicit cli(std::string name) : ncs::basic_cli<cli>(std::move(name)) {}
     };
 
     template<class T = ncs::cli>
