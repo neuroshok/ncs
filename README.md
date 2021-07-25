@@ -3,15 +3,15 @@
 ## Usage
 ### Basic
 ```cpp
-ncs_root(my_commands) // commands : generated structure
+ncs_root(my_commands) // my_commands : generated structure
     ncsi::command help{ this, "help", [this]{  cli.help(); }, "Display this help" };
     ncsi::command version{ this, "version", []{ std::cout << "0.2.1"; }, "Display program version" };
 ncs_root_()
 
 int main(int argc, const char* argv[])
 {
-    ncs::cli cli;
-    my_commands commands{ cli, argv[0] }; // The 2nd argument is the module name (here the program name)
+    ncs::cli cli{ argv[0] };
+    nc_commands nc{ cli };
     cli.process(argc, argv);
 
     return 0;
@@ -62,7 +62,7 @@ ncs_root_()
 int main(int argc, const char* argv[])
 {
     ::compiler compiler;
-    ::ngl_cli ngl_cli{ compiler };
+    ::ngl_cli ngl_cli{ argv[0], compiler };
     nc_commands nc{ ngl_cli };
     ngl_cli.process(argc, argv);
 
