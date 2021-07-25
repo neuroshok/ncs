@@ -15,6 +15,7 @@ namespace ncs
     {
     public:
         virtual command_ptr add(ncs::command command) = 0;
+        virtual ~cli_base() = default;
     };
 
     template<class T>

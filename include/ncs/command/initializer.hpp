@@ -37,6 +37,7 @@ namespace ncs
     public:
         virtual ncs::cli_base& get_cli() = 0;
         virtual ncs::path& path() = 0;
+        virtual ~node_base() = default;
     };
 
     struct cli : public ncs::basic_cli<cli>
