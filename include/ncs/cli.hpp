@@ -172,7 +172,6 @@ namespace ncs
         {
             std::cout << "usage : " + module_name_ + " (command_node...) command \n";
             std::cout << "        (value... | -name(.field...)(:value)...) \n\n";
-            std::cout << "*************************************\ncommands : \n";
             for (const auto& command : commands_)
             {
                 std::cout << "\n" << command->str_path();
