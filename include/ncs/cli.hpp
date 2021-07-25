@@ -5,7 +5,9 @@
 #include <ncs/command/executor.hpp>
 
 #include <memory>
+#include <ranges>
 #include <string>
+#include <string_view>
 
 namespace ncs
 {
@@ -24,35 +26,46 @@ namespace ncs
         static constexpr const char* os_separator = "\\";
         static constexpr const char* os_extension = ".";
 
-        explicit basic_cli(std::string command_root)
-            : module_name_{ std::move(command_root) }
+        explicit basic_cli(std::string command_path)
+            : module_name_{ path_to_module(std::move(command_path)) }
+            , params_index_{}
         {}
 
-        void process(int argc, const char* argv[])
+        void process()
         {
             params_index_ = 0;
-
-            input_.reserve(argc);
-            for (int i = 0; i < argc; ++i)
-            {
-                input_.emplace_back(argv[i]);
-            }
-
-            // get program name
-            auto separator_index = input_[0].find_last_of(os_separator);
-            if (separator_index != std::string::npos)
-            {
-                input_[0] = input_[0].substr(separator_index + 1);
-                auto extension_index = input_[0].find_last_of(os_extension);
-                if (extension_index != std::string::npos) input_[0] = input_[0].substr(0, extension_index);
-            }
-
-            module_name_ = input_[0];
 
             // search command
             bool match = search();
             //if (!match) suggest(argc, argv);
             if (!match) error();
+        }
+
+        void process(std::string_view input)
+        {
+            //todo fix ranges
+            for (auto ranges : std::views::split(input, ' '))
+            {
+                std::string word;
+                for (auto c : ranges) word += c;
+                auto view =  std::string_view{ word } | std::views::drop_while(isspace) | std::views::reverse | std::views::drop_while(isspace) | std::views::reverse;
+                word = std::string{ view.begin(), view.end() };
+                if (!word.empty()) input_.push_back(std::move(word));
+            }
+
+            process();
+        }
+
+        void process(int argc, const char* argv[])
+        {
+            input_.reserve(argc);
+            for (int i = 0; i < argc; ++i)
+            {
+                input_.emplace_back(argv[i]);
+            }
+            input_[0] = module_name_;
+
+            process();
         }
 
         bool search()
@@ -148,7 +161,7 @@ namespace ncs
 
         void error()
         {
-            std::cout << "no command found,  use " + module_name_ + " help\n";
+            std::cout << "no command found, use " + module_name_ + " help\n";
         }
 
         [[nodiscard]] const std::string& module_name() const { return module_name_; }
@@ -178,8 +191,21 @@ namespace ncs
             std::cout << "\n";
         }
 
+        static std::string path_to_module(std::string path)
+        {
+            // get program name
+            auto separator_index = path.find_last_of(os_separator);
+            if (separator_index != std::string::npos)
+            {
+                path = path.substr(separator_index + 1);
+                auto extension_index = path.find_last_of(os_extension);
+                if (extension_index != std::string::npos) path = path.substr(0, extension_index);
+            }
+            return path;
+        }
+
     private:
-        unsigned int params_index_{};
+        unsigned int params_index_;
         std::vector<std::string> input_;
         std::string module_name_;
         std::vector<std::unique_ptr<ncs::command>> commands_;

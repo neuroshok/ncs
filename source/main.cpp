@@ -44,7 +44,8 @@ int main(int argc, const char* argv[])
     ::compiler compiler;
     ::ngl_cli ngl_cli{ argv[0], compiler };
     nc_commands nc{ ngl_cli };
-    ngl_cli.process(argc, argv);
+    //ngl_cli.process(argc, argv);
+    ngl_cli.process("ncs project add -name:test -vcs");
 
     return 0;
 }
