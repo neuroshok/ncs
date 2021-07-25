@@ -11,10 +11,10 @@ struct Command_class : ::ncs::node<__VA_ARGS__> \
 
 #define ncs_root_() };
 
-#define ncs_node(Name) struct:node{using node::node;
+#define ncs_node(Name) struct Name##_ :node{using node::node;
 #define ncs_node_(Name) } Name{ this, #Name };
 
-#define ncs_command(Name) struct:ncsi::command{using ncsi::command::command;
+#define ncs_command(Name) struct Name##_ :ncsi::command{using ncsi::command::command;
 #define ncs_command_(Name, Function, Description) } Name{ this, #Name, Function, Description };
 
 #define ncs_parameter(Name, Type, ...) ncsi::parameter<Type> Name{ this, #Name, __VA_ARGS__ };
