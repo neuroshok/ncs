@@ -21,10 +21,25 @@ namespace ncs
             ncs::parameters params;
 
             bool valid = true;
+            int index = 0;
+
             for (const auto& parameter : command_.parameters())
             {
                 if (!input_.parameter_exist(parameter.name()))
                 {
+                    // search for index parameter
+                    if (input_.parameter_exist(index))
+                    {
+                        bool add_ok = params.add(parameter, input_.parameter(index).value);
+                        if (!add_ok)
+                        {
+                            valid = false;
+                            errors_ += "- Error while processing value: " + input_.parameter(index).value;
+                        }
+                        ++index;
+                        continue;
+                    }
+
                     if (!parameter.has_default_value())
                     {
                         errors_ += "\n- Missing parameter <" + parameter.name() + ">";
@@ -58,7 +73,7 @@ namespace ncs
 
             if (!valid)
             {
-                std::cout << "\nCommand error ";
+                std::cout << "Command error ";
                 std::cout << errors_;
                 return;
             }

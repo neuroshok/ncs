@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <exception>
 #include <stdexcept>
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -15,17 +16,11 @@ namespace ncs
     class input_command
     {
     public:
+        // positional value
         void add_value(std::string value)
         {
             input_parameter p{ value, std::move(value) };
-            parameters_.emplace_back(std::move(p));
-        }
-
-        // use default value
-        void add_parameter(std::string name)
-        {
-            input_parameter p{ std::move(name), "" };
-            parameters_.emplace_back(std::move(p));
+            index_parameters_.emplace_back(std::move(p));
         }
 
         void add_parameter(std::string name, std::string value)
@@ -43,8 +38,19 @@ namespace ncs
         [[nodiscard]] const ncs::input_parameter& parameter(const std::string& name) const
         {
             auto param_it = std::find_if(parameters_.begin(), parameters_.end(), [&](const auto& ip){ return name == ip.name; });
-            if (param_it == parameters_.end()) throw std::logic_error("parameter not found");
+            assert(param_it == parameters_.end());
             return *param_it;
+        }
+
+        [[nodiscard]] const ncs::input_parameter& parameter(int index) const
+        {
+            assert(parameter_exist(index));
+            return index_parameters_[index];
+        }
+
+        [[nodiscard]] bool parameter_exist(int index) const
+        {
+            return index < index_parameters_.size();
         }
 
         [[nodiscard]] bool parameter_exist(const std::string& name) const
@@ -60,6 +66,7 @@ namespace ncs
 
     private:
         std::vector<ncs::input_parameter> parameters_;
+        std::vector<ncs::input_parameter> index_parameters_;
     };
 } // ncs
 
