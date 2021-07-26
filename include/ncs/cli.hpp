@@ -39,7 +39,18 @@ namespace ncs
             // search command
             bool match = search();
             //if (!match) suggest(argc, argv);
-            if (!match) error();
+            if (!match)
+            {
+                // execute ncs_module command
+                if (!commands_.empty() && commands_[0]->name() == "ncs_module")
+                {
+                    ncs::input_command input_command;
+                    params_index_ = 1; // ignore the module name
+                    parse_params(input_command);
+                    ncs::command_executor executor{ *(commands_[0]), input_command };
+                    executor.process();
+                }
+            }
         }
 
         void process(std::string_view input)
@@ -171,11 +182,14 @@ namespace ncs
         void help()
         {
             std::cout << "usage : " + module_name_ + " (command_node...) command \n";
-            std::cout << "        (value... | -name(.field...)(:value)...) \n\n";
+            std::cout << "        (value... | -name(.field...)(:value)...) \n";
             for (const auto& command : commands_)
             {
-                std::cout << "\n" << command->str_path();
-                if (!command->description().empty()) std::cout << "\n  -- " << command->description();
+                if (command->name() == "ncs_module") std::cout << "\n" << module_name_;
+                else std::cout << "\n" << command->str_path();
+
+
+                if (!command->description().empty()) std::cout << " --  " << command->description();
 
                 for (const auto& parameter : command->parameters())
                 {
@@ -186,7 +200,7 @@ namespace ncs
                     std::cout << "\n    " << parameter_name;
                     if (!parameter.description().empty()) std::cout << " -- " << parameter.description();
                 }
-                std::cout << "\n";
+                //std::cout << "\n";
             }
             std::cout << "\n";
         }

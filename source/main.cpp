@@ -21,8 +21,21 @@ struct ngl_cli : public ncs::basic_cli<::ngl_cli>
 };
 
 ncs_root(nc_commands, ::ngl_cli)
+    ncs_command(ncs_module)
+        ncs_required(path, std::string, "File or folder path to build")
+    ncs_command_(ncs_module, [this](auto&& input){ std::cout << input[ncs_module.path]; }, "")
+
     ncsi::command help{ this, "help", [this]{  cli.help(); }, "Display this help" };
     ncsi::command version{ this, "version", []{ std::cout << "0.2.1"; }, "Display compiler version" };
+
+    ncs_command(build)
+        ncs_required(path, std::string, "File or folder path to build")
+    ncs_command_(build,  [this](auto&& input){ std::cout << input[build.path]; }, "")
+
+    ncs_node(entity)
+        ncs_command(add)
+        ncs_command_(add, [this](auto&& input){  }, "Add a new entity")
+    ncs_node_(entity)
 
     ncs_node(project)
         ncs_command(add)
@@ -44,8 +57,8 @@ int main(int argc, const char* argv[])
     ::compiler compiler;
     ::ngl_cli ngl_cli{ argv[0], compiler };
     nc_commands nc{ ngl_cli };
-    //ngl_cli.process(argc, argv);
-    ngl_cli.process("ncs project add -name:test -vcs");
+    ngl_cli.process(argc, argv);
+    //ngl_cli.process("ncs project add -name:test -vcs");
 
     return 0;
 }

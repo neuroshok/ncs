@@ -1,5 +1,13 @@
 # Neuroshok Command System
 
+## Features
+- **Command tree support**
+- **Named and positional parameters**
+- **Flags**
+- **Static and dynamic commands**
+- **Compile time structures**
+- **Default values for optional parameters**
+
 ## Usage
 ### Basic
 ```cpp
@@ -21,6 +29,26 @@ int main(int argc, const char* argv[])
 Assuming the program name is "ncs", you can write
 - `ncs help`
 - `ncs version`
+
+### Use the module as a command
+The module is the root name of a command tree
+```cpp
+ncs_root(my_commands)
+    ncs_command(ncs_module) // Use the name "ncs_module" to use the module
+        ncs_required(path, std::string, "File path")
+    ncs_command_(ncs_module, [this](auto&& input){ std::cout << input[ncs_module.path]; }, "")
+ncs_root_()
+
+int main(int argc, const char* argv[])
+{
+    ncs::cli cli{ argv[0] };
+    nc_commands nc{ cli };
+    cli.process(argc, argv);
+
+    return 0;
+}
+```
+- `ncs file.ext`
 
 ### Custom cli
 ```cpp
