@@ -38,7 +38,7 @@ namespace ncs
         [[nodiscard]] const ncs::input_parameter& parameter(const std::string& name) const
         {
             auto param_it = std::find_if(parameters_.begin(), parameters_.end(), [&](const auto& ip){ return name == ip.name; });
-            assert(param_it == parameters_.end());
+            assert(param_it != parameters_.end());
             return *param_it;
         }
 
