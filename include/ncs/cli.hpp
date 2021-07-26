@@ -55,6 +55,7 @@ namespace ncs
 
         void process(std::string_view input)
         {
+            input_.clear();
             //todo fix ranges
             for (auto ranges : std::views::split(input, ' '))
             {
@@ -70,6 +71,7 @@ namespace ncs
 
         void process(int argc, const char* argv[])
         {
+            input_.clear();
             input_.reserve(argc);
             for (int i = 0; i < argc; ++i)
             {
@@ -149,7 +151,7 @@ namespace ncs
                 else input_command.add_value(param_expression);
             }
         }
-        
+
         ncs::command_ptr add(ncs::command command) override
         {
             commands_.emplace_back(std::make_unique<ncs::command>(std::move(command)));
