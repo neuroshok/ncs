@@ -15,6 +15,7 @@ target_include_directories(lib_ncs INTERFACE include)
 
 add_library(lib_color INTERFACE)
 target_include_directories(lib_color INTERFACE third_party/color-console/include)
+target_link_libraries(lib_ncs INTERFACE lib_color)
 
 add_executable(ncs source/main.cpp ${NCS_SOURCES})
-target_link_libraries(ncs lib_ncs lib_color)
+target_link_libraries(ncs lib_ncs)
