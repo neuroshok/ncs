@@ -3,6 +3,7 @@
 
 #include <ncs/command.hpp>
 #include <ncs/command/executor.hpp>
+#include <color.hpp>
 
 #include <memory>
 #include <ranges>
@@ -183,12 +184,12 @@ namespace ncs
 
         void help()
         {
-            std::cout << "usage : " + module_name_ + " (command_node...) command \n";
+            std::cout << dye::green("usage") << ": " + module_name_ + " (command_node...) command \n";
             std::cout << "        (value... | -name(.field...)(:value)...) \n";
             for (const auto& command : commands_)
             {
-                if (command->name() == "ncs_module") std::cout << "\n" << module_name_;
-                else std::cout << "\n" << command->str_path();
+                if (command->name() == "ncs_module") std::cout << "\n" <<  dye::aqua(module_name_);
+                else std::cout << "\n" << dye::aqua(command->str_path());
 
 
                 if (!command->description().empty()) std::cout << " --  " << command->description();
@@ -199,7 +200,7 @@ namespace ncs
                     if (parameter.required()) parameter_name = "<" + parameter.name() + ">";
                     else parameter_name = "-" + parameter.name() + ":" + ncs::parameter::to_string(parameter.default_value());
 
-                    std::cout << "\n    " << parameter_name;
+                    std::cout << "\n    " << dye::yellow(parameter_name);
                     if (!parameter.description().empty()) std::cout << " -- " << parameter.description();
                 }
                 //std::cout << "\n";

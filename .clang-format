@@ -56,7 +56,7 @@ Cpp11BracedListStyle: false
 DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
-FixNamespaceComments: true
+FixNamespaceComments: false
 ForEachMacros:
   - foreach
   - Q_FOREACH
@@ -118,4 +118,3 @@ StatementMacros:
   - QT_REQUIRE_VERSION
 TabWidth:        8
 UseTab:          Never
-...

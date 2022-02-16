@@ -13,6 +13,8 @@ file(GLOB_RECURSE NCS_SOURCES
 add_library(lib_ncs INTERFACE)
 target_include_directories(lib_ncs INTERFACE include)
 
+add_library(lib_color INTERFACE)
+target_include_directories(lib_color INTERFACE third_party/color-console/include)
 
 add_executable(ncs source/main.cpp ${NCS_SOURCES})
-target_link_libraries(ncs lib_ncs)
+target_link_libraries(ncs lib_ncs lib_color)
