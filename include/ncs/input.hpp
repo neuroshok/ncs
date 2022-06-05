@@ -41,7 +41,7 @@ namespace ncs
             parameters_.emplace_back(std::move(p));
         }
 
-        ncs::input_parameter& parameter(const std::string& name) const
+        const ncs::input_parameter& parameter(const std::string& name) const
         {
             auto param_it = std::find_if(parameters_.begin(), parameters_.end(), [&](const auto& ip){ return name == ip.name; });
             if (param_it == parameters_.end()) throw std::logic_error("parameter not found");

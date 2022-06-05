@@ -1,55 +1,76 @@
-#include <ncs/cli.hpp>
-#include <ncs/command_initializer.hpp>
-
-using namespace std::string_literals;
+#include <ncs/ncs.hpp>
 
 struct compiler
 {
-    void process(std::string filename, int j) { std::cout << "\ncompile file " << filename; }
+    template<class T>
+    void make_project(const ncs::named_parameters<T>& input)
+    {
+        std::cout << "\nout:\n";
+        std::cout << input[input.param.name] << std::endl;
+        if (input.has(input.param.vcs)) std::cout << input[input.param.vcs] << std::endl;
+        std::cout << input[input.param.verbose] << std::endl;
+        std::cout << input[input.param.j] << std::endl;
+    }
 };
 
-struct ngl_cli : public ncs::cli<::ngl_cli>
+struct ngl_cli : public ncs::basic_cli<::ngl_cli>
 {
-    ngl_cli(std::string name, ::compiler& c) : ncs::cli<::ngl_cli>(std::move(name)), compiler{c} {}
+    ngl_cli(std::string module_name, ::compiler& c) : ncs::basic_cli<::ngl_cli>(std::move(module_name)), compiler{ c } {}
+
     ::compiler& compiler;
 };
 
-using node = ncs::node<::ngl_cli>;
-struct nc_commands : node
-{
-    using node::node;
-    
-    ncsi::command help{ this, "help", [this]{ cli.help(); }, "Display this help" };
-    ncsi::command version{ this, "version", [this]{ std::cout << "0.2.1"; }, "Display compiler version" };
+ncs_root(nc_commands, ::ngl_cli)
+    ncs_command(ncs_module)
+
+    ncs_command_(ncs_module, []{ std::cout << "0.2.1"; }, "")
+
+    ncsi::command help{ this, "help", [this]{  cli.help(); }, "Display this help" };
+    ncsi::command version{ this, "version", []{ std::cout << "0.2.1"; }, "Display ncs version" };
+ncs_root_()
 
 /*
-    struct:node{using node::node;
-        ncs::init<ncs::command> add{ this, "add"
-        , [this]{ std::cout << "add entity"; }
-        , "Add a new entity"
-            , ncs::parameter{ "name", "Entity name" }
-            , ncs::parameter{ "mail", "", ""s } };
-    } entity{ this, "entity" };*/
+ncs_root(nc_commands, ::ngl_cli)
+    ncs_command(ncs_module)
+        ncs_required(path, std::string, "File or folder path to build")
+    ncs_command_(ncs_module, [this](auto&& input){ std::cout << input[ncs_module.path]; }, "")
+
+    ncsi::command help{ this, "help", [this]{  cli.help(); }, "Display this help" };
+    ncsi::command version{ this, "version", []{ std::cout << "0.2.1"; }, "Display compiler version" };
+
+    ncs_command(build)
+        ncs_required(path, std::string, "File or folder path to build")
+    ncs_command_(build,  [this](auto&& input){ std::cout << input[build.path]; }, "")
+
+    ncs_node(entity)
+        ncs_command(add)
+        ncs_command_(add, [this](auto&& input){  }, "Add a new entity")
+    ncs_node_(entity)
 
     ncs_node(project)
         ncs_command(add)
-            ncs_parameter(std::string, name, "Project name")
-            ncs_parameter(std::string, vcs, "Init VCS", "git"s)
-        ncs_command_(add, [this](auto&& input){ std::cout << input[add.vcs];cli.compiler.process("test", 0);  }, "Add a new project")
+            ncs_required(name, std::string, "Project name")
+            ncs_optional(vcs, std::string, "git", "Initialize VCS")
+            ncs_flag(verbose)
+            ncs_parameter(j, int, 4, "Threads to build")
+        ncs_command_(add, [this](auto&& input){ cli.compiler.make_project(ncs::named_parameters(add, input)); }, "Add a new project")
     ncs_node_(project)
-};
-
+ncs_root_()
+*/
 
 int main(int argc, const char* argv[])
 {
+    /*
+    ncs::cli cli{ argv[0] };
+    nc_commands nc{ cli };
+    cli.process(argc, argv);*/
+
     ::compiler compiler;
-    ::ngl_cli ngl_cli{ "ncs", compiler };
-
-    nc_commands nc{ ngl_cli, ngl_cli.module_name() };
-
-    //ngl_cli.help();
-
+    ::ngl_cli ngl_cli{ argv[0], compiler };
+    nc_commands nc{ ngl_cli };
     ngl_cli.process(argc, argv);
+    //ngl_cli.process("ncs project add -name:test -vcs");
+
 
     return 0;
 }

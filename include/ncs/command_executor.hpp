@@ -19,7 +19,7 @@ namespace ncs
             for (const auto& parameter : command_.parameters())
             {
                 std::cout << "\ncheck " << parameter.name() << " " << parameter.required();
-                input.
+                //input.
             }
             return true;
         }

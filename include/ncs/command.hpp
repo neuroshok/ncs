@@ -1,8 +1,8 @@
 #ifndef INCLUDE_NCS_COMMAND_HPP_NCS
 #define INCLUDE_NCS_COMMAND_HPP_NCS
 
-#include <ncs/input.hpp>
 #include <ncs/parameter.hpp>
+#include <ncs/parameters.hpp>
 #include <ncs/path.hpp>
 
 #include <string>
@@ -17,7 +17,7 @@ namespace ncs
     public:
         using function_type = std::variant<
         std::function<void()>
-        , std::function<void(const ncs::input_command&)>>;
+        , std::function<void(const ncs::parameters&)>>;
 
         template<class... Ts>
         command(ncs::path path, function_type fn, std::string description = "", Ts&&... ts)
@@ -27,21 +27,21 @@ namespace ncs
             , function_{ std::move(fn) }
         {}
 
-        void exec(const ncs::input_command& input) const
+        void exec(const ncs::parameters& parameters) const
         {
-            std::visit([&input](auto&& fn) {
+            std::visit([&parameters](auto&& fn) {
             using T = std::decay_t<decltype(fn)>;
             if constexpr (std::is_same_v<T, std::function<void()>>)
                 fn();
-            else fn(input);
+            else fn(parameters);
             }, function_);
         }
 
-        const std::string& name() const { return path_.last(); }
-        const std::string& description() const { return description_; }
-        const ncs::path& path() const { return path_; }
-        const std::string& str_path() const { return path_.str(); }
-        const std::vector<ncs::parameter>& parameters() const { return parameters_; }
+        [[nodiscard]] const std::string& name() const { return path_.last(); }
+        [[nodiscard]] const std::string& description() const { return description_; }
+        [[nodiscard]] const ncs::path& path() const { return path_; }
+        [[nodiscard]] const std::string& str_path() const { return path_.str(); }
+        [[nodiscard]] const std::vector<ncs::parameter>& parameters() const { return parameters_; }
 
     private:
         ncs::path path_;
