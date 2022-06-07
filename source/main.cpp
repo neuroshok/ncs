@@ -37,7 +37,7 @@ ncs_root(nc_commands, ::ngl_cli)
         ncs_required(tpl, std::string, "Location to the project template")
         ncs_parameter(name, std::string, "project", "Project name")
         ncs_parameter(license, std::string, "mit", "License")
-    ncs_command_(project,  [this](auto&& input){ cli.project.make(ncs::named_parameters(project, input)); }, "")
+    ncs_command_(project,  [this](auto&& input){ cli.project.make(input); }, "")
 ncs_root_()
 // clang-format on
 

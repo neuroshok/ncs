@@ -73,6 +73,12 @@ namespace ncs
             else return std::get<typename Parameter::type>(get(p).value);
         }
 
+        template<class T = std::string>
+        const T& value(const std::string& name) const
+        {
+            return std::get<T>(parameters_.at(name).value);
+        }
+
     private:
         std::unordered_map<std::string, parameters::param> parameters_;
     };
