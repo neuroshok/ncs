@@ -52,9 +52,13 @@ int main(int argc, const char* argv[])
     using namespace ncs::modules;
     ncs::modules<ngl::compiler, project> modules;
 
-    ncs::initialize init{ argc, argv, modules };*/
+    ncs::core core{ argc, argv, modules };*/
 
-    ncs::core core;
+    ncs::core core{ argc, argv };
+    core.process();
+    // core.process("nxi", "new_page search_term -s:google");
+    // core.add_command();
+
     ncs::modules::project project{ core };
     ::ngl_cli ngl_cli{ argv[0], project };
 
