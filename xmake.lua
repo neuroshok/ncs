@@ -9,13 +9,12 @@ set_languages("cxx23")
 target("ncs")
     set_kind("$(kind)")
 
-    if "$(kind)" == "binary" then
+    if is_kind("binary") then
         add_files("source/main.cpp")
     end
 
-    -- add_files("source/ncs/**.cpp")
     add_headerfiles("include/(**.hpp)")
-    -- add_files("module/**.cpp")
+    add_headerfiles("third_party/color-console/include/(**.hpp)")
 
     add_includedirs(
         "include",
