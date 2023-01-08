@@ -65,6 +65,11 @@ namespace ncs
             return parameter(param.name()).value;
         }
 
+        [[nodiscard]] const std::vector<ncs::input_parameter>& parameters() const
+        {
+            return parameters_;
+        }
+
     private:
         std::vector<ncs::input_parameter> parameters_;
         std::vector<ncs::input_parameter> index_parameters_;

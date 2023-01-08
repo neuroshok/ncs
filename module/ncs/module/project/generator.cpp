@@ -6,6 +6,8 @@
 #include <ncs/parameters.hpp>
 #include <ncs/utility.hpp>
 
+#include "tiny-process-library/process.hpp"
+
 #include <filesystem>
 #include <fstream>
 
@@ -28,6 +30,7 @@ namespace ncs::internal::modules::project
             std::string command;
             while (std::getline(ifs, command))
             {
+                if (command.empty() || !command.empty() && command[0] == '#') continue;
                 for (const auto& [parameter, value] : variables_)
                 {
                     str_replace(command, parameter, value);
@@ -63,25 +66,36 @@ namespace ncs::internal::modules::project
     {
         try
         {
+            dynamic_inputs_ = parameters;
             std::vector<fs::path> pending_rename;
 
             project_name_ = parameters.value("name");
             std::string source_str = parameters.value("tpl");
-            std::string input_license = parameters.value("license");
 
-            // arkena00/nps.git
+            target_origin_ = fs::current_path() / fs::path{ project_name_ };
+            std::string target_str = target_origin_.string();
 
-            source_origin_ = fs::path{ source_str };
-            if (!std::filesystem::exists(source_origin_)) return core_.log("Source directory not found: {}", source_origin_.generic_string());
-            
+            // tpl source
+            if (source_str.starts_with("gh:"))
+            {
+                auto slash_pos = source_str.find('/');
+                std::string user = source_str.substr(3, slash_pos - 3);
+                std::string template_name = source_str.substr(1 + slash_pos);
+                std::string repo = "nps." + template_name;
+                run("git clone https://github.com/" + user + "/" + repo + ".git");
+                source_origin_ = fs::path{ fs::current_path() / repo };
+            }
+            else
+            {
+                source_origin_ = fs::path{ source_str };
+                if (!std::filesystem::exists(source_origin_)) return core_.log("Source directory not found: {}", source_origin_.generic_string());
+            }
+
             load_variables();
             load_commands();
 
-            auto target_origin = fs::current_path() / fs::path{ project_name_ };
-            std::string target_str = target_origin.string();
-
             core_.log("Make target directory {}", target_str);
-            fs::create_directory(target_origin);
+            fs::create_directory(target_origin_);
 
             core_.log("Generate template from {}", source_str);
 
@@ -98,18 +112,18 @@ namespace ncs::internal::modules::project
                 if (source_entry.is_directory())
                 {
                     // if the directory path has meta, keep source path and rename it later (/$meta/folder/)
-                    if (is_meta) pending_rename.emplace_back(target_origin / entry_path);
-                    fs::create_directory(target_origin / entry_path);
+                    if (is_meta) pending_rename.emplace_back(target_origin_ / entry_path);
+                    fs::create_directory(target_origin_ / entry_path);
                     continue;
                 }
-                else if (!source_entry.is_regular_file()) continue; // ignore . ..
+                else if (!source_entry.is_regular_file() || file_name == ".git") continue; // ignore . ..
 
                 auto file_content = process_file(source_origin_, source_entry.path());
 
                 // output
                 fs::path output_path;
-                if (is_meta) output_path = target_origin / fs::relative(source_entry.path().parent_path(), source_origin_) / evaluate_name(file_name);
-                else output_path = target_origin / entry_path;
+                if (is_meta) output_path = target_origin_ / fs::relative(source_entry.path().parent_path(), source_origin_) / evaluate_name(file_name);
+                else output_path = target_origin_ / entry_path;
 
                 std::ofstream ofs{ output_path };
                 if (ofs.is_open())
@@ -117,7 +131,7 @@ namespace ncs::internal::modules::project
                     ofs.write(file_content.data(), file_content.size());
                     ofs.close();
                 }
-                else core_.log("Error opening file {}", (target_origin / entry_path).generic_string());
+                else core_.log("Error opening file {}", (target_origin_ / entry_path).generic_string());
             }
 
             // rename pending directories
@@ -131,8 +145,7 @@ namespace ncs::internal::modules::project
             core_.log("Running {} commands...", commands_.size());
             for (const auto& command : commands_)
             {
-                core_.log("> {}", command);
-                //system(command.c_str());
+                run(command, target_origin_);
             }
 
             core_.log("Generation complete");
@@ -155,16 +168,7 @@ namespace ncs::internal::modules::project
             // process file containing $ncs.input
             if (file_content.starts_with(meta_prefix_ + ".input"))
             {
-                auto input_path = file_content;
-                str_replace(input_path, ".", "/");
-                auto reference_path = source_origin_ / input_path /*/ input_license*/;
-
-                std::ifstream cfs{ reference_path };
-                if (cfs.is_open())
-                {
-                    file_content = { std::istreambuf_iterator<char>(cfs), std::istreambuf_iterator<char>() };
-                }
-                else core_.log("Error opening file {}", reference_path.generic_string());
+                file_content = get_input_data(file_content);
             }
 
             for (const auto& [parameter, value] : variables_)
@@ -179,15 +183,73 @@ namespace ncs::internal::modules::project
     std::string generator::evaluate_name(const std::string& name)
     {
         std::string output = name;
+        int i = 0;
         for (const auto& [variable, value] : variables_)
         {
             if (name.starts_with(variable))
             {
                 str_replace(output, variable, value);
-                return value;
+                return output;
+            }
+            ++i;
+        }
+        if (i == 0) core_.log("Variable not found for '{}'", name);
+
+        return name;
+    }
+
+    std::string generator::get_input_data(const std::string& input_path)
+    {
+        std::string input = input_path;
+
+        std::string file_content;
+        fs::path reference_path;
+        for (const auto& [name, parameter] : dynamic_inputs_)
+        {
+            if (meta_prefix_ + "." + name == input)
+            {
+                str_replace(input, ".", "/");
+
+                reference_path = source_origin_ / input / std::get<std::string>(parameter.value);
+                if (!fs::exists(reference_path))
+                {
+                    core_.log("Dynamic input file not found: {}", reference_path.generic_string());
+                    return "";
+                }
+                break;
             }
         }
 
-        return name;
+        std::ifstream cfs{ reference_path };
+        if (cfs.is_open())
+        {
+            file_content = { std::istreambuf_iterator<char>(cfs), std::istreambuf_iterator<char>() };
+        }
+        else core_.log("Error opening file {}", reference_path.generic_string());
+
+        return file_content;
+    }
+
+    void generator::run(const std::string& command, const fs::path& execution_path)
+    {
+        core_.log("> {}\n", command);
+
+        std::vector<std::string> process_args;
+        for (auto line : std::views::split(command, " "))
+        {
+            process_args.emplace_back(line.begin(), line.end());
+        }
+
+        for (const auto& arg : process_args)
+        TinyProcessLib::Process process(
+            process_args,
+            execution_path.generic_string(),
+            [&command](const char* bytes, size_t n) {
+                //std::cout << "\n" << std::string{ bytes, n } << std::endl;
+            },
+            [&command](const char* bytes, size_t n) {
+                //std::cout << "\n" << std::string{ bytes, n } << std::endl;
+            });
+
     }
 } // ncs

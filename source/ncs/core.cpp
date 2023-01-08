@@ -7,8 +7,20 @@ namespace ncs
 {
     core::core(int argc, const char* argv[]) noexcept
         : module_name_{ argv[0] }
-        , input_parameters_{ argv + 1, argv + argc }
-    {}
+        /*, input_parameters_{ argv + 1, argv + argc }*/
+    {
+        std::vector<std::string> fix_input{ argv + 1, argv + argc };
+        // merge parameters to accept "-input.name:value" parameter name, dot is splitting params
+        for (int i = 0; i < fix_input.size(); ++i)
+        {
+            if (i + 1 < fix_input.size() && fix_input[i + 1][0] == '.' && fix_input[i][0] == '-')
+            {
+                input_parameters_.emplace_back(fix_input[i] + fix_input[i + 1]);
+                ++i;
+            }
+            else input_parameters_.emplace_back(std::move(fix_input[i]));
+        }
+    }
 
     void core::process()
     {

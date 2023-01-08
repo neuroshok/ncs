@@ -150,6 +150,7 @@ namespace ncs
                         {
                             has_value = true;
                             param_name = param_expression.substr(1, j - 1);
+
                             // parse param value
                             input_command.add_parameter(param_name, param_expression.substr(j + 1));
                             break;

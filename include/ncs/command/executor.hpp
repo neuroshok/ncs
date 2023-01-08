@@ -71,6 +71,12 @@ namespace ncs
                 }
             }
 
+            // process dynamic inputs
+            for (const auto& parameter : input_.parameters())
+            {
+                params.add(ncs::parameter{ parameter.name, std::string{}, "Dynamic parameter " + parameter.name }, parameter.value);
+            }
+
             if (!valid)
             {
                 std::cout << "Command error ";

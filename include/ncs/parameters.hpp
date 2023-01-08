@@ -29,6 +29,13 @@ namespace ncs
         }
 
     public:
+        using parameters_type = std::unordered_map<std::string, parameters::param>;
+
+        parameters_type::iterator begin() { return parameters_.begin(); }
+        parameters_type::iterator end() { return parameters_.end(); }
+        parameters_type::const_iterator begin() const { return parameters_.cbegin(); }
+        parameters_type::const_iterator end() const { return parameters_.cend(); }
+
         bool add(const ncs::parameter& parameter, const std::string& value)
         {
             try
@@ -76,11 +83,12 @@ namespace ncs
         template<class T = std::string>
         const T& value(const std::string& name) const
         {
+            if (parameters_.find(name) == parameters_.end()) throw std::logic_error("ncs::parameters access error: " + name);
             return std::get<T>(parameters_.at(name).value);
         }
 
     private:
-        std::unordered_map<std::string, parameters::param> parameters_;
+        parameters_type parameters_;
     };
 
     //! experimental

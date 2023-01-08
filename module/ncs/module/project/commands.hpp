@@ -31,7 +31,7 @@ namespace ncs::internal::modules::project
         ncs_command(make)
                 ncs_required(tpl, std::string, "Location to the project template")
                 ncs_parameter(name, std::string, "project", "Project name")
-                ncs_parameter(license, std::string, "mit", "License")
+                ncs_parameter(input, std::string, "", "Dynamic input") // todo ncs_dynamic_parameter() -> ncs_parameter(noname, ncs::dynamic_input)
         ncs_command_(make, [this](auto&& input){ cmd.project.make(input); }, "")
     ncs_root_()
 }
