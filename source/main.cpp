@@ -16,60 +16,41 @@ struct compiler
     }
 };
 
-struct ngl_cli : public ncs::basic_cli<::ngl_cli>
+struct commands : public ncs::commands<::commands>
 {
-    ngl_cli(std::string module_name, ncs::modules::project& c) : ncs::basic_cli<::ngl_cli>(std::move(module_name)), project{ c } {}
+    commands(std::string module_name, ncs::modules::project& c) : ncs::commands<::commands>(std::move(module_name)), project{ c } {}
 
     ncs::modules::project& project;
 };
 
 // clang-format off
-ncs_root(nc_commands, ::ngl_cli)
+ncs_root(commands_root)
     ncs_command(ncs_module)
 
-    ncs_command_(ncs_module, [this]{ cli.help(); }, "")
+    ncs_command_(ncs_module, [this]{ cmd.help(); }, "")
 
-    ncsi::command help{ this, "help", [this]{  cli.help(); }, "Display this help" };
+    ncsi::command help{ this, "help", [this]{  cmd.help(); }, "Display this help" };
     ncsi::command version{ this, "version", []{ std::cout << "0.2.1"; }, "Display ncs version" };
 
-
+/*
     ncs_command(project)
         ncs_required(tpl, std::string, "Location to the project template")
         ncs_parameter(name, std::string, "project", "Project name")
         ncs_parameter(license, std::string, "mit", "License")
-    ncs_command_(project,  [this](auto&& input){ cli.project.make(input); }, "")
+    ncs_command_(project,  [this](auto&& input){  }, "")*/
 ncs_root_()
 // clang-format on
 
 int main(int argc, const char* argv[])
 {
     /*
-    ncs::cli cli{ argv[0] };
-    nc_commands nc{ cli };
-    cli.process(argc, argv);*/
-
-    /*
     using namespace ncs::modules;
     ncs::modules<ngl::compiler, project> modules;
-
-    ncs::core core{ argc, argv, modules };*/
+*/
 
     ncs::core core{ argc, argv };
+    core.add_module<ncs::modules::project>();
     core.process();
-    // core.process("nxi", "new_page search_term -s:google");
-    // core.add_command();
-
-    ncs::modules::project project{ core };
-    ::ngl_cli ngl_cli{ argv[0], project };
-
-    nc_commands nc{ ngl_cli };
-    ngl_cli.process(argc, argv);
-
-
-
-    //ngl_cli.process("ncs project add -name:test -vcs");
-
-
 
     return 0;
 }

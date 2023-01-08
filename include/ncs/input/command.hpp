@@ -13,6 +13,7 @@
 
 namespace ncs
 {
+    //! structured input (string -> input_command)
     class input_command
     {
     public:

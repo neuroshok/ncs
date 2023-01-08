@@ -9,12 +9,14 @@ namespace ncs
     class parameters;
 } // ncs
 
+namespace ncs::modules { class project; }
+
 namespace ncs::internal::modules::project
 {
     class generator
     {
     public:
-        explicit generator(ncs::core& core, std::string meta_prefix);
+        explicit generator(ncs::modules::project& core, std::string meta_prefix);
 
         void process(const ncs::parameters& parameters);
 

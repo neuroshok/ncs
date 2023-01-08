@@ -1,5 +1,7 @@
 #include <ncs/module/project/generator.hpp>
 
+#include <ncs/module/project/project.hpp>
+
 #include <ncs/core.hpp>
 #include <ncs/parameters.hpp>
 #include <ncs/utility.hpp>
@@ -11,8 +13,8 @@ namespace ncs::internal::modules::project
 {
     namespace fs = std::filesystem;
 
-    generator::generator(ncs::core& core, std::string meta_prefix_)
-        : core_{ core }
+    generator::generator(ncs::modules::project& project, std::string meta_prefix_)
+        : core_{ project.core() }
         , meta_prefix_{ std::move(meta_prefix_) }
     {}
 

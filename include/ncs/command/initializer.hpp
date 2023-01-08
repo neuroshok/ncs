@@ -1,6 +1,8 @@
 #ifndef INCLUDE_NCS_COMMAND_INITIALIZER_HPP_NCS
 #define INCLUDE_NCS_COMMAND_INITIALIZER_HPP_NCS
 
+#include <ncs/commands.hpp>
+
 #include <string>
 #include <functional>
 
@@ -27,45 +29,55 @@ struct Command_class : ::ncs::node<__VA_ARGS__> \
 namespace ncs
 {
     class path;
-    class cli_base;
+    class commands_base;
 
     template<class T>
-    class basic_cli;
+    class commands;
 
     class node_base
     {
     public:
-        virtual ncs::cli_base& get_cli() = 0;
+        virtual ncs::commands_base& get_commands() = 0;
         virtual ncs::path& path() = 0;
         virtual ~node_base() = default;
     };
 
-    struct cli : public ncs::basic_cli<cli>
+    struct cmd : public ncs::commands<cmd>
     {
-        explicit cli(std::string name) : ncs::basic_cli<cli>(std::move(name)) {}
+        explicit cmd(std::string name) : ncs::commands<cmd>(std::move(name)) {}
     };
 
-    template<class T = ncs::cli>
+    static ncs::cmd ncs_cmd{ "ncs" };
+
+    //! T: commands class
+    template<class T = ncs::cmd>
     class node : public node_base
     {
     public:
         node(ncs::node<T>* node, std::string name)
             : name_{ std::move(name) }
-            , cli{ node->cli }
+            , cmd{ node->cli }
             , path_{ node->path() }
         {
             path_.add(name_);
         }
 
-        explicit node(ncs::basic_cli<T>& cli_)
-            : cli{ static_cast<T&>(cli_) }
-            , name_{ cli.module_name() }
+        explicit node(std::string name)
+            : cmd{ ncs_cmd }
+            , name_{ std::move(name) }
         {
             path_.add(name_);
         }
 
-        node(ncs::basic_cli<T>& cli_, std::string name)
-            : cli{ static_cast<T&>(cli_) }
+        explicit node(ncs::commands<T>& commands_)
+            : cmd{ static_cast<T&>(commands_) }
+            , name_{ cmd.module_name() }
+        {
+            path_.add(name_);
+        }
+
+        node(ncs::commands<T>& commands_, std::string name)
+            : cmd{ static_cast<T&>(commands_) }
             , name_{ std::move(name) }
         {
             path_.add(name_);
@@ -73,12 +85,13 @@ namespace ncs
 
         [[nodiscard]] const std::string& name() const { return name_; }
         ncs::path& path() override { return path_; }
+        T& get_commands() override { return cmd; }
 
-        T& cli;
+    protected:
+        /// accessor macro defined commands, lambdas can access cmd member
+        T& cmd;
 
     private:
-        T& get_cli() override { return cli; }
-
         std::string name_;
         ncs::path path_;
     };
@@ -92,11 +105,11 @@ namespace ncs
         template<class... Args>
         init_command(ncs::node_base* node, std::string name, Args&&... args)
             : parent_{ node }
-            , command_ptr_{ node->get_cli().add(T{ ncs::path{ node->path(), std::move(name) }, std::forward<Args>(args)... }) }
+            , command_ptr_{ node->get_commands().add(T{ ncs::path{ node->path(), std::move(name) }, std::forward<Args>(args)... }) }
         {}
 
         ncs::path& path() override { return parent_->path(); }
-        cli_base& get_cli() override { return parent_->get_cli(); }
+        commands_base& get_commands() override { return parent_->get_commands(); }
 
     private:
         ncs::node_base* parent_;
