@@ -33,11 +33,11 @@ namespace ncs::internal::modules::project
                 if (command.empty() || !command.empty() && command[0] == '#') continue;
                 for (const auto& [parameter, value] : variables_)
                 {
-                    str_replace(command, parameter, value);
+                    str_replace(command, meta_prefix_ + "." + parameter, value);
                 }
                 commands_.emplace_back(command);
             }
-            core_.log("Loading {} commands", commands_.size());
+            //core_.log("Loading {} commands", commands_.size());
         }
         else core_.log("No commands found at {} ", commands_path);
     }
@@ -53,13 +53,21 @@ namespace ncs::internal::modules::project
             std::string value;
             while (ifs >> parameter >> value)
             {
-                variables_.emplace_back(meta_prefix_ + "." + parameter, value);
+                variables_.emplace_back(parameter, value);
             }
-            core_.log("Loading {} variables", variables_.size());
+
+            core_.log("Loading {} variables...", variables_.size());
+            for (auto& [variable_name, variable_value] : variables_)
+            {
+                std::string user_variable;
+                core_.message("> {} (default: {}): ", variable_name, variable_value);
+                std::getline(std::cin, user_variable);
+                if (!user_variable.empty()) variable_value = user_variable;
+            }
         }
         else core_.log("No variables found at {} ", variables_path);
 
-        variables_.emplace_back("$ncs.project.name", project_name_);
+        variables_.emplace_back("project.name", project_name_);
     }
 
     void generator::process(const ncs::parameters& parameters)
@@ -82,13 +90,17 @@ namespace ncs::internal::modules::project
                 std::string user = source_str.substr(3, slash_pos - 3);
                 std::string template_name = source_str.substr(1 + slash_pos);
                 std::string repo = "nps." + template_name;
+
+                core_.log("Loading template from github: {}/{}", user, repo);
                 run("git clone https://github.com/" + user + "/" + repo + ".git");
                 source_origin_ = fs::path{ fs::current_path() / repo };
+                clean_source_ = true;
             }
             else
             {
                 source_origin_ = fs::path{ source_str };
                 if (!std::filesystem::exists(source_origin_)) return core_.log("Source directory not found: {}", source_origin_.generic_string());
+                core_.log("Loading template from path: {}", source_str);
             }
 
             load_variables();
@@ -96,8 +108,6 @@ namespace ncs::internal::modules::project
 
             core_.log("Make target directory {}", target_str);
             fs::create_directory(target_origin_);
-
-            core_.log("Generate template from {}", source_str);
 
             for (const auto& source_entry : fs::recursive_directory_iterator(source_origin_))
             {
@@ -131,7 +141,7 @@ namespace ncs::internal::modules::project
                     ofs.write(file_content.data(), file_content.size());
                     ofs.close();
                 }
-                else core_.log("Error opening file {}", (target_origin_ / entry_path).generic_string());
+                else core_.log("Error opening output file {}", (target_origin_ / entry_path).generic_string());
             }
 
             // rename pending directories
@@ -146,6 +156,13 @@ namespace ncs::internal::modules::project
             for (const auto& command : commands_)
             {
                 run(command, target_origin_);
+            }
+
+            // cleaning repo
+            if (clean_source_)
+            {
+                core_.log("Clean source");
+                fs::remove_all(source_origin_);
             }
 
             core_.log("Generation complete");
@@ -173,7 +190,7 @@ namespace ncs::internal::modules::project
 
             for (const auto& [parameter, value] : variables_)
             {
-                str_replace(file_content, parameter, value);
+                str_replace(file_content, meta_prefix_ + "." + parameter, value);
             }
 
             return file_content;
@@ -186,9 +203,9 @@ namespace ncs::internal::modules::project
         int i = 0;
         for (const auto& [variable, value] : variables_)
         {
-            if (name.starts_with(variable))
+            if (name.starts_with(meta_prefix_ + "." + variable))
             {
-                str_replace(output, variable, value);
+                str_replace(output, meta_prefix_ + "." + variable, value);
                 return output;
             }
             ++i;
@@ -225,14 +242,13 @@ namespace ncs::internal::modules::project
         {
             file_content = { std::istreambuf_iterator<char>(cfs), std::istreambuf_iterator<char>() };
         }
-        else core_.log("Error opening file {}", reference_path.generic_string());
 
         return file_content;
     }
 
     void generator::run(const std::string& command, const fs::path& execution_path)
     {
-        core_.log("> {}\n", command);
+        core_.log("> {}", command);
 
         std::vector<std::string> process_args;
         for (auto line : std::views::split(command, " "))

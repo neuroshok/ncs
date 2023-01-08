@@ -33,6 +33,7 @@ namespace ncs::internal::modules::project
 
     private:
         ncs::core& core_;
+        bool clean_source_ = false;
 
         std::filesystem::path source_origin_;
         std::filesystem::path target_origin_;
