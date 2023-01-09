@@ -30,6 +30,9 @@ namespace ncs::internal::modules::project
             std::string command;
             while (std::getline(ifs, command))
             {
+                // todo add optional commands support , 1st line: user input, 2nd line: command
+                // ?Create github repository
+                // gh repo create $ncs.project.name --public
                 if (command.empty() || !command.empty() && command[0] == '#') continue;
                 for (const auto& [parameter, value] : variables_)
                 {
