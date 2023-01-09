@@ -70,7 +70,11 @@ namespace ncs::internal::modules::project
         }
         else core_.log("No variables found at {} ", variables_path);
 
+        // add project input commands variables
         variables_.emplace_back("project.name", project_name_);
+
+        // add meta variables
+        variables_.emplace_back("meta.project_dir", target_origin_.generic_string());
     }
 
     void generator::process(const ncs::parameters& parameters)
