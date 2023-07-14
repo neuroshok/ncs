@@ -5,6 +5,7 @@
 
 namespace ncs
 {
+    //template<class T>
     inline void str_replace(std::string& str, const std::string& from, const std::string& to)
     {
         if (from.empty()) return;

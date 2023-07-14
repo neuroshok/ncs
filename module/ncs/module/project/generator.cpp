@@ -31,8 +31,6 @@ namespace ncs::internal::modules::project
             while (std::getline(ifs, command))
             {
                 // todo add optional commands support , 1st line: user input, 2nd line: command
-                // ?Create github repository
-                // gh repo create $ncs.project.name --public
                 if (command.empty() || !command.empty() && command[0] == '#') continue;
                 for (const auto& [parameter, value] : variables_)
                 {
@@ -93,13 +91,28 @@ namespace ncs::internal::modules::project
             // tpl source
             if (source_str.starts_with("gh:"))
             {
-                auto slash_pos = source_str.find('/');
-                std::string user = source_str.substr(3, slash_pos - 3);
-                std::string template_name = source_str.substr(1 + slash_pos);
+                auto first_slash_pos = source_str.find('/');
+                std::string user = source_str.substr(3, first_slash_pos - 3);
+
+                std::string template_path = source_str.substr(1 + first_slash_pos);
+                std::string template_name;
+                std::string branch_name;
+
+                // branch in path
+                auto branch_slash_pos = template_path.find('/');
+                if (branch_slash_pos != std::string::npos)
+                {
+                    template_name = template_path.substr(0, branch_slash_pos);
+                    branch_name = template_path.substr(1 + branch_slash_pos);
+                }
+                else template_name = template_path;
+
                 std::string repo = "nps." + template_name;
+                std::string branch;
+                if (!branch_name.empty()) branch = "-b " + branch_name;
 
                 core_.log("Loading template from github: {}/{}", user, repo);
-                run("git clone https://github.com/" + user + "/" + repo + ".git");
+                run("git clone " + branch + " https://github.com/" + user + "/" + repo + ".git");
                 source_origin_ = fs::path{ fs::current_path() / repo };
                 clean_source_ = true;
             }
